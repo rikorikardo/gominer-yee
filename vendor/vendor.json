@@ -1,0 +1,15 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "github.com/dchest/blake2b",
+			"revision": ""
+		},
+		{
+			"path": "github.com/robvanmieghem/go-opencl",
+			"revision": ""
+		}
+	],
+	"rootPath": "github.com/sman2013/gominer-yee"
+}
