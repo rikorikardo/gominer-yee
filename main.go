@@ -31,7 +31,7 @@ func main() {
 	flag.Parse()
 
 	if *printVersion {
-		fmt.Println("gominer version", Version)
+		fmt.Println("gominer-yee version", Version)
 		os.Exit(0)
 	}
 
@@ -52,7 +52,7 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		}
-		log.Println(len(platormDevices), "device(s) found:")
+		log.Println(len(platormDevices), "Device(s) found:")
 		for i, device := range platormDevices {
 			log.Println(i, "-", device.Type(), "-", device.Name())
 			clDevices = append(clDevices, device)
@@ -60,7 +60,7 @@ func main() {
 	}
 
 	if len(clDevices) == 0 {
-		log.Println("No suitable opencl devices found")
+		log.Println("No suitable OpenCL devices found")
 		os.Exit(1)
 	}
 

@@ -20,6 +20,15 @@ Fork自 [robvanmieghem/gominer](https://github.com/robvanmieghem/gominer)
 go get github.com/sman2013/gominer-yee
 ```
 
+#### Nvidia显卡安装OpenCL
+- 安装显卡驱动
+- 安装CUDA
+- windows平台下需要将OpenCL.lib文件拷贝到GCC目录下
+
+#### AMD显卡安装OpenCL
+// todo
+
+
 ## 使用方法
 ```
 gominer-yee -url=http://127.0.0.1:10033

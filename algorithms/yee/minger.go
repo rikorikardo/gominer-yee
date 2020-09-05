@@ -74,6 +74,7 @@ func (m *Miner) createWork() {
 
 	for {
 		target, header, deprecationChannel, job, err := m.Client.GetWork()
+		log.Println("Fetch work from RPC")
 
 		if err != nil {
 			log.Println("ERROR fetching work -", err)
