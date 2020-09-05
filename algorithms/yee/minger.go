@@ -119,6 +119,8 @@ func (m *Miner) createWork() {
 			check := h[:4]
 			copy(oldHeader[76:], check)
 
+			header = make([]byte, len(oldHeader))
+			target = make([]byte, len(oldTarget))
 			copy(header[:], oldHeader)
 			copy(target[:], oldTarget)
 		}
