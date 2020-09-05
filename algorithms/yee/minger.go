@@ -77,6 +77,7 @@ func (m *Miner) createWork() {
 	isFirst := true
 
 	var oldHeader []byte
+	var oldTarget []byte
 	for {
 		var target []byte
 		var header []byte
@@ -93,7 +94,11 @@ func (m *Miner) createWork() {
 			if oldHeader == nil {
 				oldHeader = make([]byte, len(header))
 			}
+			if oldTarget == nil {
+				oldTarget = make([]byte, len(target))
+			}
 			copy(oldHeader[:], header)
+			copy(oldTarget[:], target)
 
 			if err != nil {
 				log.Println("ERROR fetching work -", err)
@@ -113,7 +118,9 @@ func (m *Miner) createWork() {
 			h := blake2b.Sum256(extra)
 			check := h[:4]
 			copy(oldHeader[76:], check)
+
 			copy(header[:], oldHeader)
+			copy(target[:], oldTarget)
 		}
 
 		//copy target to header
