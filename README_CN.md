@@ -8,6 +8,7 @@ Fork自 [robvanmieghem/gominer](https://github.com/robvanmieghem/gominer)
 
 [支持Windows、Linux、Mac挖矿](https://github.com/sman2013/gominer-yee/releases)
 
+注：目前只发布了windows版，后续会将其他平台程序一一发布
 
 ## 从源码安装
 
