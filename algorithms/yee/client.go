@@ -155,5 +155,6 @@ func (sc *RpcClient) Submit(header []byte, job interface{}) (err error) {
 		}
 		return
 	}
+	log.Println("Submit to switch successfully!!!!!!!!!!!!!!!!!!!!!!!")
 	return
 }

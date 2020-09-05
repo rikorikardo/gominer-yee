@@ -88,7 +88,7 @@ func (m *Miner) createWork() {
 		now := time.Now().Unix()
 		if isFirst == true || now-lastTime > 10 {
 			target, header, deprecationChannel, job, err = m.Client.GetWork()
-			log.Println("\nFetch work from RPC")
+			log.Println("Fetch work from RPC")
 			isFirst = false
 			lastTime = now
 			if oldHeader == nil {
