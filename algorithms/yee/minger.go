@@ -1,7 +1,6 @@
 package yee
 
 import (
-	"fmt"
 	"github.com/dchest/blake2b"
 	"log"
 	"time"
@@ -77,6 +76,7 @@ func (m *Miner) createWork() {
 	lastTime := time.Now().Unix()
 	isFirst := true
 
+	var oldHeader []byte
 	for {
 		var target []byte
 		var header []byte
@@ -90,6 +90,10 @@ func (m *Miner) createWork() {
 			log.Println("\nFetch work from RPC")
 			isFirst = false
 			lastTime = now
+			if oldHeader == nil {
+				oldHeader = make([]byte, len(header))
+			}
+			copy(oldHeader[:], header)
 
 			if err != nil {
 				log.Println("ERROR fetching work -", err)
@@ -98,17 +102,18 @@ func (m *Miner) createWork() {
 			}
 		} else {
 			offset := 32 + 8 + 28
-			if header[offset] < 0xFF {
-				header[offset] = header[offset] + 1
-			} else if header[offset+1] < 0xFF {
-				header[offset+1] = header[offset+1] + 1
+			if oldHeader[offset] < 0xFF {
+				oldHeader[offset] = oldHeader[offset] + 1
+			} else if oldHeader[offset+1] < 0xFF {
+				oldHeader[offset+1] = oldHeader[offset+1] + 1
 			} else {
-				header[offset+2] = header[offset+2] + 1
+				oldHeader[offset+2] = oldHeader[offset+2] + 1
 			}
-			extra := header[40:76]
+			extra := oldHeader[40:76]
 			h := blake2b.Sum256(extra)
 			check := h[:4]
-			copy(header[76:], check)
+			copy(oldHeader[76:], check)
+			copy(header[:], oldHeader)
 		}
 
 		//copy target to header
@@ -125,7 +130,7 @@ func (m *Miner) createWork() {
 				break nonce32loop
 			default:
 			}
-			fmt.Printf("num: %d\n", i)
+			//fmt.Printf("num: %d\n", i)
 
 			m.miningWorkChannel <- &miningWork{header, int(i) * m.GlobalItemSize, job}
 		}
