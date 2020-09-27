@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sman2013/gominer-yee/clients"
+	"github.com/rikorikardo/gominer-yee/clients"
 )
 
 // NewClient creates a new RpcClient given a '[stratum+tcp://]host:port' connectionstring
