@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/robvanmieghem/go-opencl/cl"
-	"github.com/sman2013/rikorikardo/clients"
-	"github.com/sman2013/rikorikardo/mining"
+	"github.com/rikorikardo/gominer-yee/clients"
+	"github.com/rikorikardo/gominer-yee/mining"
 )
 
 //miningWork is sent to the mining routines and defines what ranges should be searched for a matching nonce
