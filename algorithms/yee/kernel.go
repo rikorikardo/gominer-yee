@@ -1,19 +1,6 @@
 package yee
 
-const kernelSource = `
-
-inline static uint2 ror64(const uint2 x, const uint y)
-{
-    return (uint2)(((x).x>>y)^((x).y<<(32-y)),((x).y>>y)^((x).x<<(32-y)));
-}
-
-inline static uint2 ror64_2(const uint2 x, const uint y)
-{
-    return (uint2)(((x).y>>(y-32))^((x).x<<(64-y)),((x).x>>(y-32))^((x).y<<(64-y)));
-}
-
-
-__constant static const uchar blake2b_sigma[12][16] = {
+const kernelSource = `__constant static const uchar blake2b_sigma[12][16] = {
 	{ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15 } ,
 	{ 14, 10, 4,  8,  9,  15, 13, 6,  1,  12, 0,  2,  11, 7,  5,  3  } ,
 	{ 11, 8,  12, 0,  5,  2,  15, 13, 10, 14, 3,  6,  7,  1,  9,  4  } ,
@@ -26,7 +13,49 @@ __constant static const uchar blake2b_sigma[12][16] = {
 	{ 10, 2,  8,  4,  7,  6,  1,  5,  15, 11, 9,  14, 3,  12, 13, 0  } ,
 	{ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15 } ,
 	{ 14, 10, 4,  8,  9,  15, 13, 6,  1,  12, 0,  2,  11, 7,  5,  3  } };
+	
+	#define ROTL64( x, n ) ROTR64( x, ( 64 - ( n ) ) )
+	#define ROTR64( x, n ) ( ( n ) < 32 ? ( amd_bitalign( (uint)( ( x ) >> 32 ), (uint)( x ), (uint)( n ) ) | ( (ulong)amd_bitalign( (uint)( x ), (uint)( ( x ) >> 32 ), (uint)( n ) ) << 32 ) )\
+							: ( amd_bitalign( (uint)( x ), (uint)( ( x ) >> 32 ), (uint)( n ) - 32 ) | ( (ulong)amd_bitalign( (uint)( ( x ) >> 32 ), (uint)( x ), (uint)( n ) - 32 ) << 32 ) ) )
+	
+#define G_BLAKE2b( r, i, a, b, c, d ) \
+{\
+	a = a + b + m[ blake2b_sigma[ r ][ 2 * i + 0 ] ];\
+	d = as_ulong( as_uint2( d ^ a ).s10 );\
+	c = c + d;\
+	b = ROTR64( b ^ c, 24 );\
+	a = a + b + m[ blake2b_sigma[ r ][ 2 * i + 1 ] ];\
+	d = ROTR64( d ^ a, 16 );\
+	c = c + d;\
+	b = ROTR64( b ^ c, 63 );\
+}
 
+#define ROUND_BLAKE2b(r) \
+{\
+	G_BLAKE2b( r, 0, v[ 0 ], v[ 4 ], v[ 8 ], v[ 12 ] );\
+	G_BLAKE2b( r, 1, v[ 1 ], v[ 5 ], v[ 9 ], v[ 13 ] );\
+	G_BLAKE2b( r, 2, v[ 2 ], v[ 6 ], v[ 10 ], v[ 14 ] );\
+	G_BLAKE2b( r, 3, v[ 3 ], v[ 7 ], v[ 11 ], v[ 15 ] );\
+	G_BLAKE2b( r, 4, v[ 0 ], v[ 5 ], v[ 10 ], v[ 15 ] );\
+	G_BLAKE2b( r, 5, v[ 1 ], v[ 6 ], v[ 11 ], v[ 12 ] );\
+	G_BLAKE2b( r, 6, v[ 2 ], v[ 7 ], v[ 8 ], v[ 13 ] );\
+	G_BLAKE2b( r, 7, v[ 3 ], v[ 4 ], v[ 9 ], v[ 14 ] );\
+}
+
+#define BLAKE2b_ROUNDS \
+	ROUND_BLAKE2b( 0 );\
+	ROUND_BLAKE2b( 1 );\
+	ROUND_BLAKE2b( 2 );\
+	ROUND_BLAKE2b( 3 );\
+	ROUND_BLAKE2b( 4 );\
+	ROUND_BLAKE2b( 5 );\
+	ROUND_BLAKE2b( 6 );\
+	ROUND_BLAKE2b( 7 );\
+	ROUND_BLAKE2b( 8 );\
+	ROUND_BLAKE2b( 9 );\
+	ROUND_BLAKE2b( 0 );\
+	ROUND_BLAKE2b( 1 );
+	
 // Target is passed in via headerIn[32 - 29]
 __kernel void nonceGrind(__global ulong *headerIn, __global ulong *nonceOut) {
 	ulong target = headerIn[4];
@@ -35,50 +64,13 @@ __kernel void nonceGrind(__global ulong *headerIn, __global ulong *nonceOut) {
 	                (ulong)get_global_id(0), headerIn[5],
 	                headerIn[6], headerIn[7],
 	                headerIn[8], headerIn[9], 0, 0, 0, 0, 0, 0 };
-
 	ulong v[16] = { 0x6a09e667f2bdc928, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
 	                0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
 	                0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
 	                0x510e527fade68281, 0x9b05688c2b3e6c1f, 0xe07c265404be4294, 0x5be0cd19137e2179 };
 
-
-
-#define G(r,i,a,b,c,d) \
-	a = a + b + m[ blake2b_sigma[r][2*i] ]; \
-	((uint2*)&d)[0] = ((uint2*)&d)[0].yx ^ ((uint2*)&a)[0].yx; \
-	c = c + d; \
-	((uint2*)&b)[0] = ror64( ((uint2*)&b)[0] ^ ((uint2*)&c)[0], 24U); \
-	a = a + b + m[ blake2b_sigma[r][2*i+1] ]; \
-	((uint2*)&d)[0] = ror64( ((uint2*)&d)[0] ^ ((uint2*)&a)[0], 16U); \
-	c = c + d; \
-    ((uint2*)&b)[0] = ror64_2( ((uint2*)&b)[0] ^ ((uint2*)&c)[0], 63U);
-
-
-#define ROUND(r)                    \
-	G(r,0,v[ 0],v[ 4],v[ 8],v[12]); \
-	G(r,1,v[ 1],v[ 5],v[ 9],v[13]); \
-	G(r,2,v[ 2],v[ 6],v[10],v[14]); \
-	G(r,3,v[ 3],v[ 7],v[11],v[15]); \
-	G(r,4,v[ 0],v[ 5],v[10],v[15]); \
-	G(r,5,v[ 1],v[ 6],v[11],v[12]); \
-	G(r,6,v[ 2],v[ 7],v[ 8],v[13]); \
-	G(r,7,v[ 3],v[ 4],v[ 9],v[14]);
-
-	ROUND( 0 );
-	ROUND( 1 );
-	ROUND( 2 );
-	ROUND( 3 );
-	ROUND( 4 );
-	ROUND( 5 );
-	ROUND( 6 );
-	ROUND( 7 );
-	ROUND( 8 );
-	ROUND( 9 );
-	ROUND( 10 );
-	ROUND( 11 );
-#undef G
-#undef ROUND
-
+BLAKE2b_ROUNDS;
+									
 	if (as_ulong(as_uchar8(0x6a09e667f2bdc928 ^ v[0] ^ v[8]).s76543210) <= target) {
 		*nonceOut = m[4];
 		return;
