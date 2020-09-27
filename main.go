@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/robvanmieghem/go-opencl/cl"
-	"github.com/sman2013/gominer-yee/algorithms/yee"
-	"github.com/sman2013/gominer-yee/mining"
+	"github.com/rikorikardo/gominer-yee/algorithms/yee"
+	"github.com/rikorikardo/gominer-yee/mining"
 )
 
 //Version is the released version string of gominer-yee
