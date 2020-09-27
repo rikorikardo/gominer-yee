@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/dchest/blake2b"
-	"github.com/sman2013/gominer-yee/clients"
-	"github.com/sman2013/gominer-yee/clients/stratum"
+	"github.com/rikorikardo/gominer-yee/clients"
+	"github.com/rikorikardo/gominer-yee/clients/stratum"
 )
 
 const (
